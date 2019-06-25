@@ -9,7 +9,7 @@ const buildJsonSchemas = require('./jsonschemas')
 const fs = require('fs')
 
 const maybeFetchPro = () => {
-  const isProBuild = process.env.EDITION === 'pro' || fs.existsSync('pro')
+  const isProBuild = true // || process.env.EDITION === 'pro' || fs.existsSync('pro')
   return gulp.src('./').pipe(gulpif(isProBuild, run('git submodule update --init', { verbosity: 2 })))
 }
 
@@ -45,6 +45,9 @@ const compileTypescript = () => {
 const watch = () => {
   return gulp.watch('./src/**/*.ts', compileTypescript)
 }
+const watchJSX = () => {
+  return gulp.watch('../modules/whatsapp-module/**/*.jsx', compil)
+}
 
 const createOutputDirs = () => {
   return gulp
@@ -68,5 +71,6 @@ const build = () => {
 
 module.exports = {
   build,
-  watch
+  watch,
+  watchJSX
 }

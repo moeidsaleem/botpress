@@ -11,14 +11,16 @@
   "license": "AGPL-3.0",
   "private": true,
   "scripts": {
-    "start": "cd ./out/bp && cross-env NODE_PATH=./ cross-env BP_MODULES_PATH=../../modules:../../private-modules node index.js",
+    "start": "cd ./out/bp && cross-env NODE_PATH=./ cross-env BP_MODULES_PATH=../../modules:../../private-modules node index.js & yarn watch",
     "cmd": "yarn run gulp",
     "build": "yarn cmd build",
     "watch": "yarn cmd watch",
     "package": "yarn cmd package",
     "test": "cross-env NATIVE_EXTENSIONS_DIR=./build/native-extensions node_modules/.bin/jest -i --detectOpenHandles -c jest.config.js",
     "tslint": "node_modules/.bin/tslint --project tslint.json",
-    "commitmsg": "commitlint -e $GIT_PARAMS"
+    "commitmsg": "commitlint -e $GIT_PARAMS",
+    "compile": "yarn && yarn build && yarn start ",
+    "complete-compile": ""
   },
   "dependencies": {
     "axios": "^0.18.1",

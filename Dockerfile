@@ -3,7 +3,6 @@ MAINTAINER moeidsaleem@gmail.com
 ADD . /botpress
 WORKDIR /botpress
 
-
 RUN apt update && \
 	apt install -y wget ca-certificates && \
 	update-ca-certificates && \

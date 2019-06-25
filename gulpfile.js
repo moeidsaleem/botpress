@@ -31,7 +31,7 @@ gulp.task('build:reference', docs.buildReference())
 gulp.task('package:core', package.packageCore())
 gulp.task('package', gulp.series([package.packageApp, modules.packageModules(), package.copyNativeExtensions]))
 
-gulp.task('watch', gulp.parallel([core.watch, ui.watchAll()]))
+gulp.task('watch', gulp.parallel([core.watch, ui.watchAll(), modules.watchWhatsappModule]))
 gulp.task('watch:core', core.watch)
 gulp.task('watch:studio', gulp.series([ui.cleanStudioAssets, ui.createStudioSymlink, ui.watchStudio]))
 gulp.task('watch:admin', ui.watchAdmin)

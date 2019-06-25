@@ -155,6 +155,16 @@ const createModuleSymlink = () => {
     .pipe(symlink(`./out/bp/assets/modules/${moduleName}/`, { type: 'dir' }))
 }
 
+const watchWhatsappModule = cb => {
+  exec('yarn && yarn watch', { cwd: './modules/whatsapp-module' }, (err, stdout, stderr) => {
+    if (err) {
+      console.error(stderr)
+      return cb(err)
+    }
+    cb()
+  })
+}
+
 module.exports = {
   build,
   buildSdk,
@@ -162,5 +172,6 @@ module.exports = {
   packageModules,
   buildModuleBuilder,
   cleanModuleAssets,
-  createModuleSymlink
+  createModuleSymlink,
+  watchWhatsappModule
 }
