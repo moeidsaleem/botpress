@@ -55,3 +55,4 @@ edition.json
 /internal-modules
 /private-modules
 /src/bp/ml/node-svm
+modules/whatsapp-module

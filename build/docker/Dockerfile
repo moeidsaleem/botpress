@@ -18,8 +18,10 @@ RUN apk update && \
 	dpkg-reconfigure --frontend noninteractive tzdata && \
 	./bp extract
 
-ENV BP_NLU_DUCKLINGURL=http://localhost:8000
+
+ENV BP_MODULE_NLU_DUCKLINGURL=http://localhost:8000
 ENV BP_IS_DOCKER=true
+
 ENV LANG=C.UTF-8
 EXPOSE 3000
 

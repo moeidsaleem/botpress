@@ -3,22 +3,12 @@ id: release-notes
 title: Release Notes
 ---
 
-## Features
+## Bug fixes
 
-- Configurable history length in channel web
-- Add security namespace
-- Add option to create trusted reference in channel web
-
-## Bug Fixes
-
-- Fix before session timeout not being executed
-- Fix context expiry that only worked one time
-- Fix an issue where renamed files were duplicated in the ghost
-- Fix issue where config files caused the ghost to always be dirty
-
-## Docs
-
-- Add section on internationalization
+- Use content picker for invalid content in Choice Skill
+- Fix issue on Call API Skill where headers would not save
+- Display last user visit in HITL
+- Display quick replies in HITL
 
 ## Changelog
 

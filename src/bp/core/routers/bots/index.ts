@@ -1,13 +1,14 @@
 /*---------------------------------------------------------------------------------------------
-*  Copyright (c) Botpress, Inc. All rights reserved.
-*  Licensed under the AGPL-3.0 license. See license.txt at project root for more information.
-*--------------------------------------------------------------------------------------------*/
+ *  Copyright (c) Botpress, Inc. All rights reserved.
+ *  Licensed under the AGPL-3.0 license. See license.txt at project root for more information.
+ *--------------------------------------------------------------------------------------------*/
 
 import { Logger, RouterOptions } from 'botpress/sdk'
 import { Serialize } from 'cerialize'
 import { gaId, machineUUID } from 'common/stats'
 import { BotpressConfig } from 'core/config/botpress.config'
 import { ConfigProvider } from 'core/config/config-loader'
+import { asBytes } from 'core/misc/utils'
 import { GhostService } from 'core/services'
 import ActionService from 'core/services/action/action-service'
 import AuthService, { TOKEN_AUDIENCE } from 'core/services/auth/auth-service'
@@ -29,10 +30,11 @@ import { URL } from 'url'
 
 import { disableForModule } from '../conditionalMiddleware'
 import { CustomRouter } from '../customRouter'
+import { NotFoundError } from '../errors'
 import { checkTokenHeader, needPermissions } from '../util'
 
 const debugMedia = DEBUG('audit:action:media-upload')
-const DEFAULT_MAX_SIZE = 10 // mb
+const DEFAULT_MAX_SIZE = '10mb'
 
 export class BotsRouter extends CustomRouter {
   private actionService: ActionService
@@ -91,12 +93,16 @@ export class BotsRouter extends CustomRouter {
     // '___' is a non-valid botId, but here acts as for "all bots"
     // This is used in modules when they setup routes that work on a global level (they are not tied to a specific bot)
     // Check the 'sso-login' module for an example
-    if (req.params.botId === '___') {
+    if (req.params.botId === '___' || req.originalUrl.endsWith('env.js')) {
       return next()
     }
 
     const config = await this.configProvider.getBotConfig(req.params.botId)
-    if (config.private && !req.originalUrl.endsWith('env.js') && !this.mediaPathRegex.test(req.originalUrl)) {
+    if (config.disabled) {
+      return next(new NotFoundError('Bot is disabled'))
+    }
+
+    if (config.private && !this.mediaPathRegex.test(req.originalUrl)) {
       return this.checkTokenHeader(req, res, next)
     }
 
@@ -178,6 +184,8 @@ export class BotsRouter extends CustomRouter {
           return res.sendStatus(404)
         }
 
+        const config = await this.configProvider.getBotpressConfig()
+
         const data = this.studioParams(botId)
         const liteEnv = `
               // Lite Views Specific
@@ -201,6 +209,7 @@ export class BotsRouter extends CustomRouter {
               window.BP_BASE_PATH = "/${app}/${botId}";
               window.BOTPRESS_VERSION = "${data.botpress.version}";
               window.APP_NAME = "${data.botpress.name}";
+              window.SHOW_POWERED_BY = ${!!config.showPoweredBy};
               ${app === 'studio' ? studioEnv : ''}
               ${app === 'lite' ? liteEnv : ''}
               // End
@@ -248,6 +257,15 @@ export class BotsRouter extends CustomRouter {
         }
 
         res.send(bot)
+      })
+    )
+
+    this.router.get(
+      '/workspaceBotsIds',
+      this.checkTokenHeader,
+      this.needPermissions('read', 'bot.information'),
+      this.asyncMiddleware(async (req, res) => {
+        return res.send(await this.workspaceService.getBotRefs(req.workspace))
       })
     )
 
@@ -302,7 +320,7 @@ export class BotsRouter extends CustomRouter {
         cb(new Error(`Invalid mime type (${file.mimetype})`), false)
       },
       limits: {
-        fileSize: _.get(this.botpressConfig, 'fileUpload.maxFileSize', DEFAULT_MAX_SIZE) * 1000 * 1024
+        fileSize: asBytes(_.get(this.botpressConfig, 'fileUpload.maxFileSize', DEFAULT_MAX_SIZE))
       }
     }).single('file')
 
