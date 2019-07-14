@@ -3,15 +3,15 @@
 
 
 #removing current files 
-rm -rf  ./modules/whatsapp-module/
+# rm -rf  ./modules/whatsapp-module/
 rm -rf ./out/bp/data/ 
-rm -rf .
+# rm -rf .
 
 #botpress setup
 git pull origin master 
 
-#creating new folders
-cd ./modules/ && sudo mkdir whatsapp-module/
+#creating new foldelrs
+cd ./modules/ && sud  o mkdir whatsapp-module/
 cd ./out &&  cd bp/  && sudo mkdir data/
 #fetching latest build update from botpress.io  
 git pull origin master 

@@ -20,7 +20,10 @@
     "tslint": "node_modules/.bin/tslint --project tslint.json",
     "commitmsg": "commitlint -e $GIT_PARAMS",
     "compile": "yarn && yarn build && yarn start ",
-    "complete-compile": ""
+    "package-module": "cd modules/whatsapp-module/ && ./node_modules/.bin/module-builder package ",
+    "package-bots": "tar --exclude='.git' --exclude='./out/bp/data/.git' -czvf ./out/bp/data/deployment/bots.tgz ./out/bp/data/",
+    "package-align":"cp ./modules/whatsapp-module/whatsapp-module_1_0_0.tgz  ./out/bp/data/deployment/ &&  cp DockerFile ./out/bp/data/deployment/ && cp deploy.yaml ./out/bp/data/deployment/",
+    "package-release": " yarn package-module && yarn package-align"
   },
   "dependencies": {
     "axios": "^0.18.1",

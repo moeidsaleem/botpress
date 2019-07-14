@@ -206,6 +206,5 @@ module.exports = {
   buildModuleBuilder,
   cleanModuleAssets,
   createModuleSymlink,
-  watchWhatsappModule
   createAllModulesSymlink
 }

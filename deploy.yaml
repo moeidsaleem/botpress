@@ -1,0 +1,616 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: udp-services
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx-ingress-serviceaccount
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: nginx-ingress-clusterrole
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - endpoints
+      - nodes
+      - pods
+      - secrets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: nginx-ingress-role
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - pods
+      - secrets
+      - namespaces
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    resourceNames:
+      # Defaults to "<election-id>-<ingress-class>"
+      # Here: "<ingress-controller-leader>-<nginx>"
+      # This has to be adapted if you change either parameter
+      # when launching the nginx-ingress-controller.
+      - "ingress-controller-leader-nginx"
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: nginx-ingress-role-nisa-binding
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nginx-ingress-role
+subjects:
+  - kind: ServiceAccount
+    name: nginx-ingress-serviceaccount
+    namespace: ingress-nginx
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: nginx-ingress-clusterrole-nisa-binding
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nginx-ingress-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: nginx-ingress-serviceaccount
+    namespace: ingress-nginx
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/part-of: ingress-nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/part-of: ingress-nginx
+      annotations:
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
+    spec:
+      serviceAccountName: nginx-ingress-serviceaccount
+      containers:
+        - name: nginx-ingress-controller
+          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.25.0
+          args:
+            - /nginx-ingress-controller
+            - --configmap=$(POD_NAMESPACE)/nginx-configuration
+            - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+            - --publish-service=$(POD_NAMESPACE)/ingress-nginx
+            - --annotations-prefix=nginx.ingress.kubernetes.io
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+            # www-data -> 33
+            runAsUser: 33
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: https
+      port: 443
+      targetPort: https
+
+---
+
+
+  ## SECOND FILE 
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mb-imbot
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pgdata
+  namespace: mb-imbot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: botpress-claim
+  namespace: mb-imbot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: botpress-lang-claim
+  namespace: mb-imbot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: botpress
+  namespace: mb-imbot
+spec:
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: '3000'
+  selector:
+    service: botpress
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: botpress-lang
+  namespace: mb-imbot
+spec:
+  ports:
+    - name: '3100'
+      port: 3100
+      targetPort: 3100
+    - name: '8000'
+      port: 8000
+      targetPort: 8000
+  selector:
+    service: botpress-lang
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: mb-imbot
+spec:
+  ports:
+    - name: '5435'
+      port: 5435
+      targetPort: 5435
+  selector:
+    service: postgres
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mb-imbot
+spec:
+  ports:
+    - name: '6379'
+      port: 6379
+      targetPort: 6379
+  selector:
+    service: redis
+
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: botpress
+  namespace: mb-imbot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        service: botpress
+    spec:
+      containers:
+        - args:
+            - /botpress/bp
+          env:
+            - name: BP_LICENSE_KEY
+              value: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJsaW1pdHMiOnsic2VhdHMiOiItMSIsIm5vZGVzIjoiMSJ9LCJmaW5nZXJwcmludCI6ImViOmM4OmQwOmYxOmI2OmQzOjJhOjVhOmRhOmRkOmM1OmQ3OjRiOjFmOmFiOjIwIiwiZmluZ2VycHJpbnRUeXBlIjoiY2x1c3Rlcl91cmwiLCJsYWJlbCI6Ik1hc2hyZXEgVHJpYWwiLCJsaWNlbnNlU2NoZW1hIjoidjEiLCJvZmZsaW5lIjpmYWxzZSwiZW5kRGF0ZSI6IjIwMTktMDgtMDFUMjM6NTk6NTkuOTk5WiIsInN0YXJ0RGF0ZSI6IjIwMTktMDUtMDRUMDU6MzM6MjAuMzU3WiIsIm93bmVyRW1haWwiOiJqYkBib3RwcmVzcy5pbyIsInZlcnNpb25zIjoiPj0gMTEueCA8IDEzIiwic3VwcG9ydCI6InN0YW5kYXJkIiwibWFudWFsUmVmcmVzaCI6dHJ1ZSwic3Vic2NyaXB0aW9uSWQiOiJzdWJfRjBRU0VpQXJSMmlWNmUiLCJwYWlkVW50aWwiOiIyMDE5LTA3LTA3VDE4OjMyOjIzLjAwMFoiLCJpYXQiOjE1NjQ3MDM5OTksImlzcyI6ImJvdHByZXNzIn0.sxqT0a9GkwU5dT2n_YcWQxYvi41GSHyXBXBkz9fvBJBpuGFoicZ6_LTzghKXuzFgGLvAmhieDAMzzp7B3VjGNhGWgU4HfiCL3z82uo1yzwqQxLiMgtfuDuHAlzi60w1SS_g0CH7VddRUDSO9qJUdFEgTnARN6L2_jurNWCOh7jdWtupHT8XUSA_GI0vzydacoBMAbCPKSF-RrasBG0ZlJQqs4-JGNIMLbqeVV8D4AgSr12S1dXAfximxgm9r0eZCyo9DcvaO1OuM3-OlBYJBKQybxGZ9nv1TmjV3sJKCFEFf4tQQZINttUDY9VNF8l8mcrre1NyZGU6WkVPPP-Qn6g4ZbYtnpkrhFOoR2vmL7UHen2jBI4HV2L7xP-qZHiLH_I7fiZvxI3hXiXfWheooi7gX2T6t5EF54a7YZvDw5b-gGhk9Vb8QUgNICcdCnGvjwHI2ftV5bLlHHZMY9ovwtvm4-qOwnXZpz6ZcEIu9im_FYcU4ujdM5mGMSJ6QqV4flSfSr2seMHY5A9nsUl8_mWGjou32P2bi0zCaQqB48g1d5jeIZMikapyKcPMfFKxu8dzpe-8iQMlR-klVK30I6yXooQ0KIoD_7QE0jZxFV9RTYVRsyXnjFIpk6wv3LL2y9Grme1A9x9aGCgNiwm6HJtqjyCp2FHgLL8N196UEZBk'
+            - name: BP_MODULE_NLU_DUCKLINGURL
+              value: http://botpress-lang:8000
+            - name: BP_MODULE_NLU_LANGUAGESOURCES
+              value: '[{"endpoint":"http://botpress-lang:3100"}]'
+            - name: BP_PRODUCTION
+              value: 'true'
+            - name: CLUSTER_ENABLED
+              value: 'true'
+            - name: DATABASE_URL
+              value: postgres://postgres:secretpw@postgres:5435/botpress_db
+            - name: EXTERNAL_URL
+              value: https://imbotuat.mashreq.com
+            - name: PRO_ENABLED
+              value: 'true'
+            - name: REDIS_URL
+              value: redis://redis:6379?password=redisPassword
+          image: botpress/server:nightly-2019-07-10
+          name: botpress-server
+          ports:
+            - containerPort: 3000
+          resources: {}
+          volumeMounts:
+            - mountPath: /botpress/data
+              name: botpress-claim
+      restartPolicy: Always
+      volumes:
+        - name: botpress-claim
+          persistentVolumeClaim:
+            claimName: botpress-claim
+status: {}
+
+
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: botpress-lang
+  namespace: mb-imbot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        service: botpress-lang
+    spec:
+      containers:
+        - args:
+            - bash
+            - -c
+            - ./duckling -p 8000 & ./bp lang --langDir /botpress/lang --port 3100
+          image: botpress/server:nightly-2019-07-10
+          name: botpress-lang
+          ports:
+            - containerPort: 3100
+            - containerPort: 8000
+          resources: {}
+          volumeMounts:
+            - mountPath: /botpress/lang
+              name: botpress-lang-claim
+      restartPolicy: Always
+      volumes:
+        - name: botpress-lang-claim
+          persistentVolumeClaim:
+            claimName: botpress-lang-claim
+status: {}
+
+---
+
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: mb-imbot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        service: postgres
+    spec:
+      containers:
+        - env:
+            - name: PGPORT
+              value: '5435'
+            - name: POSTGRES_DB
+              value: botpress_db
+            - name: POSTGRES_PASSWORD
+              value: secretpw
+            - name: POSTGRES_USER
+              value: postgres
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          image: postgres:11.2-alpine
+          name: postgres
+          ports:
+            - containerPort: 5435
+          resources: {}
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: pgdata
+      restartPolicy: Always
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: pgdata
+status: {}
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: mb-imbot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        service: redis
+    spec:
+      containers:
+        - args:
+            - redis-server
+            - --requirepass
+            - redisPassword
+          image: redis:5.0.5-alpine
+          name: redis
+          ports:
+            - containerPort: 6379
+          resources: {}
+          volumeMounts:
+            - mountPath: /data
+              name: redisdata
+      restartPolicy: Always
+      volumes:
+        - name: redisdata
+          persistentVolumeClaim:
+            claimName: redisdata
+status: {}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redisdata
+  namespace: mb-imbot
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: bp-ingress
+  namespace: mb-imbot
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+ rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: botpress
+          servicePort: 3000
