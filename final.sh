@@ -8,7 +8,7 @@ fi
 mkdir ./out/bp/data/deployment && yarn package-release
 
 # (3) - Deploy on Git 
-git add . && git commit -m ':fire: updating new build. :construction:'  && git push origin master
+cd ./out/bp/data/ && git add . && git commit -m ':fire: updating new build. :construction:'  && git push origin master
 
 # Now we will configure our docker file to run the commands accordingly. The 
 # docker file will fetch from latest botpress, copy deployments into their respective locations, 
