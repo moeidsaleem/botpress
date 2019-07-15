@@ -1,16 +1,12 @@
 FROM botpress/server:nightly-2019-07-14
-WORKDIR ./
-COPY /deployment/whatsapp-module_1_0_0.tgz /botpress/data/modules/
-COPY ['bots','global','bot.config.schema.json','botpress.config.schema.json'] ./botpress/data
-
-
+COPY bots global modules bot.config.schema.json botpress.config.schema.json /botpress/data/
 
 
 
 
 
 # FROM ubuntu:18.04
-# MAINTAINER moeidsaleem@gmail.com 
+# MAINTAINER Mashreqbank
 # ADD . /botpress
 # WORKDIR /botpress
 
