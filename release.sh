@@ -1,26 +1,26 @@
 # MASHREQ IMBOT CLI v.0.0.1 - beta 
 
-function updateRepo()
-{
-    #!/bin/sh
-    git add .
-    git commit -m "uploading changes."
-UPSTREAM=${1:-'@{u}'}
-echo $UPSTREAM
-LOCAL=$(cd out/bp/data && git rev-parse @)
-REMOTE=$(cd out/bp/data && git rev-parse "$UPSTREAM")
-BASE=$(cd out/bp/data && git merge-base @ "$UPSTREAM")
+# function updateRepo()
+# {
+#     #!/bin/sh
+#     git add .
+#     git commit -m "uploading changes."
+# UPSTREAM=${1:-'@{u}'}
+# echo $UPSTREAM
+# LOCAL=$(cd out/bp/data && git rev-parse @)
+# REMOTE=$(cd out/bp/data && git rev-parse "$UPSTREAM")
+# BASE=$(cd out/bp/data && git merge-base @ "$UPSTREAM")
 
-if [ $LOCAL = $REMOTE ]; then
-    echo "Up-to-date"
-elif [ $LOCAL = $BASE ]; then
-    echo "Need to pull"
-elif [ $REMOTE = $BASE ]; then
-    echo "Need to push"
-else
-    echo "Diverged"
-fi
-}
+# if [ $LOCAL = $REMOTE ]; then
+#     echo "Up-to-date"
+# elif [ $LOCAL = $BASE ]; then
+#     echo "Need to pull"
+# elif [ $REMOTE = $BASE ]; then
+#     echo "Need to push"
+# else
+#     echo "Diverged"
+# fi
+# }
 
 function create_package()
 {
@@ -50,7 +50,7 @@ break
 
 
 
-updateRepo
+# updateRepo
 echo "#################################\nWelcome! to Mashreq IMBot CLI.\n#################################\n"
 options=("Recompile" "Deploy" "Quit")
 select opt in "${options[@]}"
