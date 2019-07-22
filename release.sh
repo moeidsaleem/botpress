@@ -21,6 +21,9 @@
 #     echo "Diverged"
 # fi
 # }
+branch="mashreqneo"
+admin="mashreq.moeid@gmail.com"
+user_email=$( git config user.email)
 
 function create_package()
 {
@@ -39,9 +42,9 @@ function compile()
             fi
          echo "recompiling whatsapp-modules...."
          mkdir ./out/bp/data/modules && create_package
-         cd ./out/bp/data/ && git add . && git commit -m ':fire: updating new release build :construction:'  && git push origin release
+         cd ./out/bp/data/ && git add . && git commit -m ':fire: updating new release build :construction:'  && git push origin "${branch}"
         else 
-        cd ./out/bp/data/ && git add . && git commit -m ':fire: updating new release build :construction:'  && git push origin release
+        cd ./out/bp/data/ && git add . && git commit -m ':fire: updating new release build :construction:'  && git push origin "${branch}"
 
   fi
 break
@@ -51,8 +54,11 @@ break
 
 
 # updateRepo
-echo "#################################\nWelcome! to Mashreq IMBot CLI.\n#################################\n"
+echo "#---------------------------------#\n#################################\nWelcome! to Mashreq IMBot CLI.\n#################################\n#---------------------------------#\n"
 options=("Recompile" "Deploy" "Quit")
+optionsx=("release" "mashreqneo" "next" "master")
+
+
 select opt in "${options[@]}"
 do
     case $opt in
@@ -62,9 +68,43 @@ do
             break
             ;;
         "Deploy")
-            echo "\nDeploying to git..."
-            compile false
-            break
+            echo "Please select the branch"
+            select abc in "${optionsx[@]}"
+            do 
+                case $abc in 
+                "release")
+                echo "selecting origin/release ...."
+                $branch="release"
+                compile false
+                break
+                ;;
+                "mashreqneo")
+                echo "selecting origin/mashreqneo ...."
+                $branch="mashreqneo"
+                compile false
+                break
+                ;;
+                "next")
+                echo "selecting origin/next ...."
+                 $branch="next"
+                compile false
+                break
+                ;;
+                "master")
+                if [ "$user_email" == "$admin" ];then 
+                echo "Administrator right detected for ${user_email} - ${admin}.. \n Publishing to master"
+                $branch="mashreqneo"
+                compile false
+                break
+                else
+                  echo "Sorry! User ${user_email} does not have access to publish to master branch. \n\n"
+                  break
+                fi  
+                ;;
+                *) echo " testing new things"
+                esac
+            done 
+              break
             ;;
         "Quit")
         echo "Thankyou for using MashreqBot CLI"
