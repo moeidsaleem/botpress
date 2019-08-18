@@ -12,7 +12,7 @@ export default class Message extends React.Component {
   }
 
   renderText() {
-    return <p>{this.props.content.text}</p>
+    return <p>{this.props.content.text} </p>
   }
 
   renderImage() {
@@ -58,7 +58,18 @@ export default class Message extends React.Component {
   }
 
   renderMessageFromBot() {
-    return <div className={style.message + ' ' + style.fromBot}>{this.renderContent()}</div>
+    return (
+      <div className={style.message + ' ' + style.fromBot}>
+        {this.renderContent()}
+        <SayButton
+          onClick={event => console.log(event)}
+          speak={this.props.content.text}
+          voice={voices => [].find.call(voices, v => v.lang === 'es_ES')}
+        >
+          Tell me a story
+        </SayButton>
+      </div>
+    )
   }
 
   renderMessageFromSystem() {

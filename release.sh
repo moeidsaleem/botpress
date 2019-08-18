@@ -22,7 +22,8 @@
 # fi
 # }
 branch="mashreqneo"
-admin="mashreq.moeid@gmail.com"
+# admin="mashreq.moeid@gmail.com"
+admin = "jijeshpo@mashreq.com"
 user_email=$( git config user.email)
 
 function create_package()
@@ -54,8 +55,10 @@ break
 
 
 # updateRepo
-echo "#---------------------------------#\n#################################\nWelcome! to Mashreq IMBot CLI.\n#################################\n#---------------------------------#\n"
-options=("Recompile" "Deploy" "Quit")
+echo "#---------------------------------#\n#################################\nWelcome! to Mashreq IMBot CLI ^_^ \n#################################\n#---------------------------------#\n"
+say 'welcome to Mashreq IM Bot CLI'
+
+options=("Recompile" "Deploy" "About" "Quit")
 optionsx=("release" "mashreqneo" "next" "master")
 
 
@@ -63,12 +66,14 @@ select opt in "${options[@]}"
 do
     case $opt in
         "Recompile")
+            say 'Re compiling'
             echo "\nRecompiling..."
             compile true
             break
             ;;
         "Deploy")
             echo "Please select the branch"
+            say 'Please select a branch to deploy changes'
             select abc in "${optionsx[@]}"
             do 
                 case $abc in 
@@ -98,6 +103,7 @@ do
                 break
                 else
                   echo "Sorry! User ${user_email} does not have access to publish to master branch. \n\n"
+                  say "Sorry! User does not have access to publish to master branch. Contact Support."
                   break
                 fi  
                 ;;
@@ -106,8 +112,14 @@ do
             done 
               break
             ;;
+            "About")
+        echo "Mashreq IMBot CLI v.0.0.2"
+        say "Mashreq CLI IMBot is a next generation chat bot that handle all your digital banking needs easily! You can get more information about at www dot mashreq bank dot com!"
+            break
+            ;;
         "Quit")
         echo "Thankyou for using MashreqBot CLI"
+        say "Thankyou for using MashreqBot CLI"
             break
             ;;
         *) echo "invalid option $REPLY";;

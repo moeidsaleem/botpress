@@ -31,7 +31,7 @@ export default class Conversation extends React.Component {
     this.props.bp.events.off('guest.hitl.message', this.appendMessage)
   }
 
-  appendMessage = (message) => {
+  appendMessage = message => {
     if (this.state.messages && this.props.data && this.props.data.id === message.session_id) {
       this.setState({ messages: [...this.state.messages, message] })
       setTimeout(this.scrollToBottom, 50)

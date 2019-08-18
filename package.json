@@ -21,7 +21,7 @@
     "commitmsg": "commitlint -e $GIT_PARAMS",
     "compile": "yarn && yarn build && yarn start ",
     "package-module": "cd modules/whatsapp-module/ && ./node_modules/.bin/module-builder package || echo 'failed to run the command....' ",
-    "package-align":"cp ./modules/whatsapp-module/whatsapp-module_1_0_0.tgz  ./out/bp/data/modules/ &&  cp release.sh ./out/bp/data/ &&  cp Dockerfile ./out/bp/data/ && cp deploy.yaml ./out/bp/data/",
+    "package-align": "cp ./modules/whatsapp-module/whatsapp-module_1_0_0.tgz  ./out/bp/data/modules/ &&  cp release.sh ./out/bp/data/ &&  cp Dockerfile ./out/bp/data/ && cp deploy.yaml ./out/bp/data/",
     "package-release": "yarn package-module && yarn package-align"
   },
   "dependencies": {
@@ -73,6 +73,7 @@
     "portfinder": "^1.0.20",
     "q": "^1.5.1",
     "querystring": "^0.2.0",
+    "react-say": "^1.2.0",
     "redlock": "^3.1.2",
     "reflect-metadata": "^0.1.13",
     "semver": "^5.6.0",
