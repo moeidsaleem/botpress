@@ -21,9 +21,9 @@
 #     echo "Diverged"
 # fi
 # }
-branch="mashreqneo"
+branch="mashreqneo" #defaultBranch
 # admin="mashreq.moeid@gmail.com"
-admin = "jijeshpo@mashreq.com"
+admin = "mashreq.jijesh@gmail.com"
 user_email=$( git config user.email)
 
 function create_package()

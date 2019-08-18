@@ -13,3 +13,14 @@
 [submodule "src/bp/ml/sentencepiece"]
 	path = src/bp/ml/sentencepiece
 	url = git@github.com:botpress/node-sentencepiece.git
+[submodule "modules/whatsapp-module"]
+	url = https://mashreq_shabeer@bitbucket.org/JijeshMashreq/whatsapp-bots.git
+[submodule "./out/bp/data/"]
+	path = ./out/bp/data/
+	url = https://mashreq_shabeer@bitbucket.org/JijeshMashreq/whatsapp-bots.git
+[submodule "out/bp/data/"]
+	path = out/bp/data/
+	url = https://mashreq_shabeer@bitbucket.org/JijeshMashreq/whatsapp-bots.git
+[submodule "whatsapp-bots"]
+	path = whatsapp-bots
+	url = https://mashreq_shabeer@bitbucket.org/JijeshMashreq/whatsapp-bots.git
